@@ -2,6 +2,9 @@ const express = require("express");
 const Projects = require("./projects-model");
 const router = express.Router();
 
+const { checkProjectID } = require("./projects-middleware");
+
+
 // GET ALL PROJECTS
 router.get("/", (req, res) => {
   Projects.get()
@@ -17,14 +20,10 @@ router.get("/", (req, res) => {
 });
 
 // GET PROJECT BY ID
-router.get("/:id", (req, res) => {
-  Projects.get(req.params.id)
+router.get("/:id", checkProjectID, (req, res) => {
+  Projects.get(req.verifiedProjectID)
     .then((proj) => {
-      if (proj) {
         res.status(200).json(proj);
-      } else {
-        res.status(404).json({ message: "Project not found" });
-      }
     })
     .catch((error) => {
       console.log(error);
@@ -60,8 +59,7 @@ router.post("/", (req, res) => {
 });
 
 // UPDATE PROJECT BY ID
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
+router.put("/:id", checkProjectID, async (req, res) => {
   const { name, description, completed } = req.body;
 
   if (!name || !description) {
@@ -69,7 +67,7 @@ router.put("/:id", async (req, res) => {
       .status(400)
       .json({ message: "Please provide name and description for the project" });
   } else {
-    Projects.update(id, { name, description, completed })
+    Projects.update(req.verifiedProjectID, { name, description, completed })
       .then((updatedP) => {
         res.status(201).json(updatedP);
       })
